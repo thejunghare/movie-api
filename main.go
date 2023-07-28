@@ -151,6 +151,4 @@ func main() {
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("Srever error", err)
 	}
-
-	// helloncoivnv
 }
