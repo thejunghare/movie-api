@@ -86,6 +86,30 @@ func createMovie(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "Create a new movie")
 }
 
+// upated movies by id
+func updateMovie(w http.ResponseWriter, r *http.Request) {
+	// set json content type
+	w.Header().Set("Content-Type", "application/json")
+
+	// params
+	params := mux.Vars(r)
+
+	// loop over the movies, range
+	// delete the movie
+	// add a new movie
+	for key, val := range movies {
+		if val.ID == params["id"] {
+			movies = append(movies[:key], movies[key+1:]...)
+			var movie Movie
+			_ = json.NewDecoder(r.Body).Decode(&movie)
+			movie.ID = params["id"]
+			movies = append(movies, movie)
+			json.NewEncoder(w).Encode(movie)
+			return
+		}
+	}
+}
+
 // Delete movies by id
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -110,16 +134,20 @@ func main() {
 
 	r := mux.NewRouter()
 
+	// Movie struct (db)
 	movies = append(movies, Movie{ID: "1", Title: "Yeh Jawaani Hai Deewani", Director: &Director{Firstname: "Ayan", Lastname: "Mukerji"}})
 	movies = append(movies, Movie{ID: "2", Title: "Sanju", Director: &Director{Firstname: "Rajkumar", Lastname: "Hirani"}})
 	movies = append(movies, Movie{ID: "3", Title: " Barfi!", Director: &Director{Firstname: "Anurag", Lastname: "Basu"}})
 
+	// Route handler
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/movies", getMovies).Methods("GET")           // get all movies
 	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")       // get movie by id
-	r.HandleFunc("/delete/{id}", deleteMovie).Methods("DELETE") // delete movie by id
 	r.HandleFunc("/create", createMovie).Methods("PUT")         // create movie
+	r.HandleFunc("/update/{id}", updateMovie).Methods("PUT")    // updaate movie
+	r.HandleFunc("/delete/{id}", deleteMovie).Methods("DELETE") // delete movie by id
 
+	// Create and serve server at port 8080
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("Srever error", err)
 	}
