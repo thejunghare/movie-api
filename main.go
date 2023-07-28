@@ -24,7 +24,7 @@ type Director struct {
 var movies []Movie
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello!\n")
+	fmt.Fprintf(w, "Movies crud api!\n")
 }
 
 // Display all movies
@@ -53,8 +53,37 @@ func getMovie(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// fmt.Fprintf(w, "Deleted the movie by id")
 	// if id not found
 	http.NotFound(w, r)
+}
+
+// create movie
+func createMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Parse the request body
+	var newMovie Movie
+	err := json.NewDecoder(r.Body).Decode(&newMovie)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	// Close the request body
+	defer r.Body.Close()
+
+	// Add movie
+	movies = append(movies, newMovie)
+
+	// return the new movie
+	err = json.NewEncoder(w).Encode(movies)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// fmt.Fprintf(w, "Create a new movie")
 }
 
 // Delete movies by id
@@ -64,9 +93,8 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	for key, val := range movies {
 		if val.ID == params["id"] {
-			res := []Movie{val}
-			res = append(res[:key], res[key+1:]...)
-			err := json.NewEncoder(w).Encode((res))
+			movies = append(movies[:key], movies[key+1:]...)
+			err := json.NewEncoder(w).Encode((movies))
 			if err != nil {
 				http.Error(w, err.Error(), 500)
 				return
@@ -87,9 +115,10 @@ func main() {
 	movies = append(movies, Movie{ID: "3", Title: " Barfi!", Director: &Director{Firstname: "Anurag", Lastname: "Basu"}})
 
 	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/movies", getMovies).Methods("GET")
-	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
-	r.HandleFunc("/delete/{id}", deleteMovie).Methods("DELETE")
+	r.HandleFunc("/movies", getMovies).Methods("GET")           // get all movies
+	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")       // get movie by id
+	r.HandleFunc("/delete/{id}", deleteMovie).Methods("DELETE") // delete movie by id
+	r.HandleFunc("/create", createMovie).Methods("PUT")         // create movie
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("Srever error", err)
